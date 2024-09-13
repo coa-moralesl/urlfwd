@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Redirect</title>
+</head>
+<body>
+    <script>
+        // Function to get query parameters by name
+        function getQueryParam(param) {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get(param);
+        }
+
+        // Get the 'url' parameter from the query string
+        const encodedUrl = getQueryParam('url');
+
+        // If the 'url' parameter exists, decode it
+        if (encodedUrl) {
+            const decodedUrl = decodeURIComponent(encodedUrl);
+
+            // Validate if the decoded URL is valid (starts with http:// or https://)
+            const urlRegex = /^(https?:\/\/)/;
+
+            if (urlRegex.test(decodedUrl)) {
+                // If it's a valid URL, forward to the HTTPS version (if HTTP, convert to HTTPS)
+                const finalUrl = decodedUrl.replace(/^http:\/\//, 'https://');
+                window.location.href = finalUrl;
+            } else {
+                // If the URL is not valid, display an error message
+                document.body.innerHTML = '<h1>Invalid URL</h1>';
+            }
+        } else {
+            // If no 'url' parameter exists, display an error message
+            document.body.innerHTML = '<h1>No URL provided</h1>';
+        }
+    </script>
+    <footer>
+        <p>This page was created for the use of City of Austin | Capital Delivery Services | Technology Services Division</p>
+    </footer>
+</body>
+</html>
