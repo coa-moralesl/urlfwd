@@ -49,7 +49,7 @@
       <li>Enter the remainder of the URL (or phone number for TEL) in the Input field.</li>
       <li>If you select <strong>other</strong>, an additional field will appear so you can enter your custom protocol (e.g., <code>myproto://</code>).</li>
       <li>Click the <strong>Generate URL and Copy to Clipboard</strong> button. The generated URL will appear below and be automatically copied to your clipboard.</li>
-      <li>You can click <strong>Test URL</strong> to open the generated URL in the same page.</li>
+      <li>You can click <strong>Test URL</strong> to open the generated URL in a new tab. After the new tab opens, this page will attempt to close.</li>
     </ol>
   </div>
 
@@ -87,36 +87,45 @@
   </div>
 
   <script>
-    // Redirect if query parameters exist on page load
+    // Attempt to close the window (note: this will only work if the window was opened via script)
+    function closeWindow() {
+      // Some browsers require setting the window's opener to null first.
+      window.opener = null;
+      window.open('', '_self');
+      window.close();
+    }
+
+    // Redirect if query parameters exist on page load and attempt to close the page after redirecting
     function redirectToURL() {
       const urlParams = new URLSearchParams(window.location.search);
+      let newUrl = '';
       if (urlParams.has('http')) {
         const value = decodeURIComponent(urlParams.get('http'));
-        window.location.href = value.startsWith('http://') ? value : `http://${value}`;
+        newUrl = value.startsWith('http://') ? value : `http://${value}`;
       } else if (urlParams.has('https')) {
         const value = decodeURIComponent(urlParams.get('https'));
-        window.location.href = value.startsWith('https://') ? value : `https://${value}`;
+        newUrl = value.startsWith('https://') ? value : `https://${value}`;
       } else if (urlParams.has('tel')) {
         const value = decodeURIComponent(urlParams.get('tel'));
-        window.location.href = `tel:${value}`;
+        newUrl = `tel:${value}`;
       } else if (urlParams.has('companyportal')) {
         const value = decodeURIComponent(urlParams.get('companyportal'));
-        window.location.href = `companyportal:${value}`;
+        newUrl = `companyportal:${value}`;
       } else if (urlParams.has('other')) {
         const value = decodeURIComponent(urlParams.get('other'));
-        window.location.href = value;
+        newUrl = value;
+      }
+      if (newUrl) {
+        window.location.href = newUrl;
+        // Wait a moment before attempting to close the page
+        setTimeout(closeWindow, 1000);
       }
     }
 
     // Show/hide custom protocol field based on dropdown selection
     document.getElementById('typeSelect').addEventListener('change', function() {
       const type = this.value;
-      const customProtocolContainer = document.getElementById('customProtocolContainer');
-      if (type === 'other') {
-        customProtocolContainer.style.display = 'block';
-      } else {
-        customProtocolContainer.style.display = 'none';
-      }
+      document.getElementById('customProtocolContainer').style.display = (type === 'other') ? 'block' : 'none';
     });
 
     // Generate URL and copy to clipboard
@@ -137,7 +146,6 @@
         outputUrl = `${domain}${path}?companyportal=${encodeURIComponent(input)}`;
       } else if (type === 'other') {
         const customProtocol = document.getElementById('customProtocolField').value.trim();
-        // Optionally, you could validate that customProtocol ends with "://"
         outputUrl = `${domain}${path}?other=${encodeURIComponent(customProtocol + input)}`;
       }
 
@@ -165,10 +173,12 @@
       }, 3000);
     }
 
-    // Test URL button
+    // Test URL button: open generated URL in a new tab and close the current window
     document.getElementById('testButton').addEventListener('click', function() {
       const testUrl = document.getElementById('outputField').value;
-      window.location.href = testUrl;
+      window.open(testUrl, '_blank');
+      // Attempt to close this window after opening the new tab
+      setTimeout(closeWindow, 500);
     });
 
     window.onload = redirectToURL;
